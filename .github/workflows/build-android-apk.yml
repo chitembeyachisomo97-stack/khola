@@ -1,0 +1,79 @@
+name: Build Android APK
+
+on:
+  workflow_dispatch:        # lets you press "Run workflow" on GitHub
+  push:
+    paths:
+      - "site_url.txt"
+      - "mobile/**"
+      - ".github/workflows/build-android-apk.yml"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get the code
+        uses: actions/checkout@v4
+
+      - name: Check the website address was set
+        run: |
+          if grep -q "USERNAME" site_url.txt; then
+            echo "::error::Open site_url.txt and put your real website address, then push again."
+            exit 1
+          fi
+          echo "Website: $(cat site_url.txt)"
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Install app tools
+        working-directory: mobile
+        run: npm install
+
+      - name: Write app config from site_url.txt
+        working-directory: mobile
+        run: |
+          export SITE_URL="$(tr -d '[:space:]' < ../site_url.txt)"
+          export SITE_HOST="$(echo "$SITE_URL" | sed -E 's#^https?://([^/]+).*#\1#')"
+          node -e '
+            const fs = require("fs");
+            fs.writeFileSync("capacitor.config.json", JSON.stringify({
+              appId: "com.khola.app",
+              appName: "KHOLA",
+              webDir: "www",
+              server: {
+                url: process.env.SITE_URL,
+                allowNavigation: [process.env.SITE_HOST],
+                androidScheme: "https"
+              }
+            }, null, 2));
+          '
+          cat capacitor.config.json
+
+      - name: Create the Android project
+        working-directory: mobile
+        run: |
+          npx cap add android
+          npx cap sync android
+
+      - name: Build the APK
+        working-directory: mobile/android
+        run: |
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - name: Save the APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: KHOLA-android-apk
+          path: mobile/android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error

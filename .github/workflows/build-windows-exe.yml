@@ -1,0 +1,48 @@
+name: Build Windows EXE
+
+on:
+  workflow_dispatch:        # lets you press "Run workflow" on GitHub
+  push:
+    paths:
+      - "site_url.txt"
+      - "desktop/**"
+      - ".github/workflows/build-windows-exe.yml"
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Get the code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Check the website address was set
+        shell: bash
+        run: |
+          if grep -q "USERNAME" site_url.txt; then
+            echo "::error::Open site_url.txt and put your real website address, then push again."
+            exit 1
+          fi
+          echo "Website: $(cat site_url.txt)"
+
+      - name: Install build tools
+        run: pip install pywebview pyinstaller
+
+      - name: Build KHOLA.exe
+        shell: bash
+        run: |
+          pyinstaller --onefile --windowed --name KHOLA \
+            --add-data "site_url.txt;." \
+            --collect-all webview \
+            desktop/khola_desktop.py
+
+      - name: Save the exe
+        uses: actions/upload-artifact@v4
+        with:
+          name: KHOLA-windows-exe
+          path: dist/KHOLA.exe
+          if-no-files-found: error
