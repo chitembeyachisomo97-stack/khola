@@ -1,0 +1,8 @@
+{% extends 'base.html' %}{% block body %}
+<div class="card"><h2>Daily Customer Club</h2>
+<p>Join to receive stock alert notifications when fresh chickens are available.</p>
+{% if not user %}<a class="btn" href="{{ url_for('login') }}">Log in to join</a>
+{% elif member %}<p>&#9989; You are in the club. Alerts appear on your dashboard.</p>
+<form method="post" action="{{ url_for('club_leave') }}"><button class="grey">Leave club</button></form>
+{% else %}<form method="post" action="{{ url_for('club_join') }}"><button>Add me</button></form>{% endif %}
+</div>{% endblock %}

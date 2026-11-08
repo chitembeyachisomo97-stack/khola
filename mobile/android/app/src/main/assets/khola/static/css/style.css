@@ -1,0 +1,27 @@
+:root{--g:#2e7d32;--o:#e65100;--bg:#fffaf0;--card:#fff;--tx:#2b2b2b}
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,Arial;background:var(--bg);color:var(--tx)}
+header{background:var(--g);color:#fff;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:5}
+header h1{margin:0;font-size:1.5rem;letter-spacing:2px}
+.motto{background:#fff3cd;text-align:center;padding:8px;font-weight:600;color:var(--o)}
+main{max-width:900px;margin:auto;padding:14px}
+.card{background:var(--card);border-radius:12px;padding:14px;margin:12px 0;box-shadow:0 1px 4px #0002}
+.hero{width:100%;max-height:300px;object-fit:cover;border-radius:12px}
+button,.btn{background:var(--g);color:#fff;border:0;border-radius:8px;padding:10px 14px;font-size:1rem;cursor:pointer;text-decoration:none;display:inline-block}
+.btn2{background:var(--o)}.red{background:#c62828}.grey{background:#777}
+input,select,textarea{width:100%;padding:10px;margin:6px 0;border:1px solid #bbb;border-radius:8px;font-size:1rem}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.flash{background:#e3f2fd;border-left:4px solid #1976d2;padding:10px;margin:10px 0;border-radius:6px}
+.badge{padding:3px 8px;border-radius:10px;color:#fff;font-size:.8rem}
+.WAITING{background:#f9a825}.APPROVED{background:#2e7d32}.REJECTED{background:#c62828}.REFUNDED{background:#6a1b9a}
+footer{background:#263238;color:#fff;padding:18px;text-align:center;margin-top:30px}
+footer a{color:#ffcc80}
+.menu{position:relative}.menu button{background:transparent;font-size:1.6rem;padding:0 8px}
+.dd{display:none;position:absolute;right:0;top:38px;background:#fff;color:#000;border-radius:8px;min-width:210px;box-shadow:0 2px 8px #0004}
+.dd a{display:block;padding:12px;color:#222;text-decoration:none;border-bottom:1px solid #eee}
+dialog{border:0;border-radius:14px;width:92%;max-width:420px;padding:18px}
+dialog::backdrop{background:#0008}
+table{width:100%;border-collapse:collapse;font-size:.9rem}td,th{padding:6px;border-bottom:1px solid #eee;text-align:left}
+.pad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:260px;margin:10px auto}
+.pad button{padding:16px;font-size:1.3rem;background:#eee;color:#000}
+.dots{text-align:center;font-size:2rem;letter-spacing:10px;min-height:40px}
+.small{font-size:.85rem;color:#666}

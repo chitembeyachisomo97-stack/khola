@@ -1,0 +1,14 @@
+{
+  "name": "KHOLA - Live Chicken Sales",
+  "short_name": "KHOLA",
+  "description": "Order live local and DuDu chickens from the KHOLA khola.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#fffaf0",
+  "theme_color": "#2e7d32",
+  "icons": [
+    {"src": "/static/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any"},
+    {"src": "/static/icon.svg", "sizes": "512x512", "type": "image/svg+xml", "purpose": "maskable"}
+  ]
+}

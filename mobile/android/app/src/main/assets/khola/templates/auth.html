@@ -1,0 +1,20 @@
+{% extends 'base.html' %}{% block body %}
+<div class="card"><h2>{{ title }}</h2>
+<form method="post" autocomplete="on">
+{% if mode=='signup' %}
+<input name="name" placeholder="Full name" autocomplete="name" required>
+<input name="phone" placeholder="Phone number" autocomplete="tel" required>
+<input name="address" placeholder="Address / Location" autocomplete="street-address" required>{% endif %}
+{% if mode in ('signup','login','forgot') %}
+<input type="email" name="email" placeholder="Email" autocomplete="username email" required>{% endif %}
+{% if mode in ('signup','login','reset') %}
+<input type="password" name="password" placeholder="Password" minlength="8"
+ autocomplete="{{ 'current-password' if mode=='login' else 'new-password' }}" required>{% endif %}
+<button>{{ title }}</button></form>
+<p class="small">
+{% if mode=='login' %}<a href="{{ url_for('signup') }}">Create account</a> |
+<a href="{{ url_for('forgot') }}">Forgot password?</a>
+{% elif mode=='signup' %}Have an account? <a href="{{ url_for('login') }}">Log in</a>{% endif %}</p>
+{% if mode=='signup' %}<p class="small">Tip: when your browser offers to save the password to Google Password Manager, choose Save.</p>{% endif %}
+{% if link %}<div class="flash">Reset link (demo mode): <a href="{{ link }}">{{ link }}</a></div>{% endif %}
+</div>{% endblock %}

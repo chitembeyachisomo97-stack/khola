@@ -1,79 +1,73 @@
-name: Build Android APK
+name: Build KHOLA Offline Android APK
 
 on:
-  workflow_dispatch:        # lets you press "Run workflow" on GitHub
+  workflow_dispatch:
   push:
+    branches:
+      - main
     paths:
-      - "site_url.txt"
-      - "mobile/**"
-      - ".github/workflows/build-android-apk.yml"
+      - 'app.py'
+      - 'config.py'
+      - 'db.py'
+      - 'requirements.txt'
+      - 'templates/**'
+      - 'static/**'
+      - 'mobile/android/**'
+      - '.github/workflows/build-android-apk.yml'
+
+permissions:
+  contents: read
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Get the code
+      - name: Checkout repository
         uses: actions/checkout@v4
-
-      - name: Check the website address was set
-        run: |
-          if grep -q "USERNAME" site_url.txt; then
-            echo "::error::Open site_url.txt and put your real website address, then push again."
-            exit 1
-          fi
-          echo "Website: $(cat site_url.txt)"
-
-      - name: Set up Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
 
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: "17"
+          java-version: '17'
 
-      - name: Install app tools
-        working-directory: mobile
-        run: npm install
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
 
-      - name: Write app config from site_url.txt
-        working-directory: mobile
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Prepare KHOLA Python files and assets
         run: |
-          export SITE_URL="$(tr -d '[:space:]' < ../site_url.txt)"
-          export SITE_HOST="$(echo "$SITE_URL" | sed -E 's#^https?://([^/]+).*#\1#')"
-          node -e '
-            const fs = require("fs");
-            fs.writeFileSync("capacitor.config.json", JSON.stringify({
-              appId: "com.khola.app",
-              appName: "KHOLA",
-              webDir: "www",
-              server: {
-                url: process.env.SITE_URL,
-                allowNavigation: [process.env.SITE_HOST],
-                androidScheme: "https"
-              }
-            }, null, 2));
-          '
-          cat capacitor.config.json
+          mkdir -p mobile/android/app/src/main/python
+          mkdir -p mobile/android/app/src/main/assets/khola
 
-      - name: Create the Android project
-        working-directory: mobile
-        run: |
-          npx cap add android
-          npx cap sync android
+          cp app.py config.py db.py mobile/android/app/src/main/python/
 
-      - name: Build the APK
+          rm -rf mobile/android/app/src/main/assets/khola/templates
+          rm -rf mobile/android/app/src/main/assets/khola/static
+
+          cp -r templates mobile/android/app/src/main/assets/khola/
+          cp -r static mobile/android/app/src/main/assets/khola/
+
+          cp requirements.txt mobile/android/app/requirements.txt
+
+      - name: Generate Gradle wrapper
         working-directory: mobile/android
-        run: |
-          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
-          chmod +x gradlew
-          ./gradlew assembleDebug
+        run: gradle wrapper --gradle-version 8.9
 
-      - name: Save the APK
+      - name: Build standalone APK
+        working-directory: mobile/android
+        run: ./gradlew assembleDebug
+
+      - name: Upload KHOLA APK
         uses: actions/upload-artifact@v4
         with:
-          name: KHOLA-android-apk
+          name: KHOLA-Offline-Android-APK
           path: mobile/android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error

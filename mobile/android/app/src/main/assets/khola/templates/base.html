@@ -1,0 +1,30 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="manifest" href="{{ url_for('manifest') }}"><meta name="theme-color" content="#2e7d32">
+<link rel="icon" href="{{ url_for('static', filename='icon.svg') }}">
+<link rel="apple-touch-icon" href="{{ url_for('static', filename='icon.svg') }}">
+<title>{{ brand }}</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"></head><body>
+<header><h1><a href="{{ url_for('home') }}" style="color:#fff;text-decoration:none">{{ brand }}</a></h1>
+<div class="row">
+{% if user %}<a class="small" style="color:#fff" href="{{ url_for('my_account') }}">{{ user['name'] }}</a>
+<a class="small" style="color:#fff" href="{{ url_for('logout') }}">Logout</a>
+{% else %}<a class="small" style="color:#fff" href="{{ url_for('login') }}">Login</a>{% endif %}
+<div class="menu"><button onclick="document.getElementById('dd').style.display=document.getElementById('dd').style.display=='block'?'none':'block'">&#8942;</button>
+<div class="dd" id="dd">
+<a href="{{ url_for('admin_dashboard') if is_admin else url_for('admin_login') }}">Admin Dashboard</a>
+<a href="{{ url_for('club') }}">Daily Customer Club</a>
+<a href="{{ url_for('privacy') }}">Privacy Policy</a>
+<a href="{{ url_for('terms') }}">Terms and Conditions</a></div></div></div></header>
+<div class="motto">{{ motto }}</div>
+<main>
+{% for m in get_flashed_messages() %}<div class="flash">{{ m }}</div>{% endfor %}
+{% block body %}{% endblock %}
+</main>
+<footer><b>Contact</b><br>Gmail: <a href="mailto:{{ contact_email }}">{{ contact_email }}</a><br>
+WhatsApp: <a href="https://wa.me/265{{ contact_wa[1:] }}">{{ contact_wa }}</a>
+<br><button id="installBtn" style="display:none;margin-top:10px" class="btn2">Install KHOLA app</button></footer>
+<script>const CSRF='{{ csrf_token() }}';</script>
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+{% block scripts %}{% endblock %}
+</body></html>

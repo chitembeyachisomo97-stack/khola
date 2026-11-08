@@ -27,7 +27,16 @@ from db import close_db, db, init_db, notify, now, order_no, sales_summary, set_
 
 os.makedirs(config.UPLOAD_DIR, exist_ok=True)
 
-app = Flask(__name__)
+RESOURCE_DIR = os.environ.get(
+    "KHOLA_RESOURCE_DIR",
+    os.path.dirname(os.path.abspath(__file__))
+)
+
+app = Flask(
+    __name__,
+    template_folder=os.path.join(RESOURCE_DIR, "templates"),
+    static_folder=os.path.join(RESOURCE_DIR, "static")
+)
 app.secret_key = config.load_secret_key()
 app.config["MAX_CONTENT_LENGTH"] = 8 * 1024 * 1024
 app.config["SESSION_COOKIE_HTTPONLY"] = True

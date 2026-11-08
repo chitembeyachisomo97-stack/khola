@@ -1,0 +1,72 @@
+{% extends 'base.html' %}{% block body %}
+<h2>Admin Dashboard <a class="btn grey" style="float:right" href="{{ url_for('admin_logout') }}">Logout</a></h2>
+
+{% if low %}<div class="flash" style="border-color:#e65100;background:#fff3e0"><b>&#9888; Low stock:</b>
+{% for p in low %}{{ p['name'] }} ({{ p['stock'] }} left){% if not loop.last %}, {% endif %}{% endfor %}
+- update the Khola Stock section below.</div>{% endif %}
+
+<div class="card"><h3>Today's Sales</h3>
+<table>
+<tr><td>Orders placed today</td><td><b>{{ summary.placed }}</b></td></tr>
+<tr><td>Verified today</td><td><b>{{ summary.verified.n }}</b> order(s), <b>{{ summary.verified.birds }}</b> chickens</td></tr>
+<tr><td>Money confirmed today</td><td><b>K{{ '{:,}'.format(summary.verified.money) }}</b></td></tr>
+<tr><td>Waiting for you to verify</td><td><b>{{ summary.waiting.n }}</b> order(s) (K{{ '{:,}'.format(summary.waiting.money) }})</td></tr>
+<tr><td>Refund requests open</td><td><b>{{ summary.refunds }}</b></td></tr>
+<tr><td>All time</td><td><b>K{{ '{:,}'.format(summary.alltime.money) }}</b> from {{ summary.alltime.birds }} chickens</td></tr>
+</table></div>
+
+<div class="card"><h3>Daily Customer Management</h3>
+{% for o in orders %}<div style="border-bottom:1px solid #eee;padding:8px 0">
+<b>{{ no(o['id']) }}</b> <span class="badge {{ o['status'] }}">{{ o['status'] }}</span>
+{% if o['refund_requested'] and o['status']!='REFUNDED' %}<span class="badge red">REFUND REQUESTED</span>{% endif %}<br>
+{{ o['cname'] }} ({{ o['cphone'] }}) - {{ o['qty'] }} x {{ o['product_name'] }} ({{ o['size_label'] }})<br>
+K{{ '{:,}'.format(o['total']) }} via {{ o['channel'] or '-' }} | Ref: <b>{{ o['reference'] or '-' }}</b>
+<span class="small"> {{ o['created'] }}</span>
+<div class="row" style="margin-top:6px">
+{% if o['status']=='WAITING' and o['reference'] %}
+<form method="post" action="{{ url_for('admin_verify', oid=o['id']) }}"><button>Verify Order</button></form>
+<form method="post" action="{{ url_for('admin_reject', oid=o['id']) }}"><button class="grey">Reject</button></form>{% endif %}
+{% if o['status']!='REFUNDED' and o['reference'] %}
+<form method="post" action="{{ url_for('admin_refund', oid=o['id']) }}"><button class="red">Reclaim Refund</button></form>{% endif %}
+</div></div>{% else %}<p class="small">No orders yet.</p>{% endfor %}</div>
+
+<div class="card"><h3>Khola Stock &amp; Prices</h3>
+<form method="post" action="{{ url_for('admin_stock') }}">
+{% for p in products %}<p><b>{{ p['name'] }}</b> stock:
+<input type="number" min="0" name="stock_{{ p['id'] }}" value="{{ p['stock'] }}"></p>
+{% for s in sizes[p['id']] %}{{ s['label'] }} price (MWK):
+<input type="number" min="0" name="price_{{ s['id'] }}" value="{{ s['price'] }}">{% endfor %}{% endfor %}
+<button>Save Stock &amp; Prices</button></form></div>
+
+<div class="card"><h3>Edit Home Page</h3>
+<form method="post" action="{{ url_for('admin_settings') }}">
+<label>Brand name</label><input name="brand" value="{{ brand }}">
+<label>Business motto (change any time)</label><input name="motto" value="{{ motto }}">
+<button>Save</button></form>
+<hr><h4>Home Chicken Photo</h4>
+<form method="post" action="{{ url_for('admin_photo') }}" enctype="multipart/form-data">
+<label>Upload from phone</label><input type="file" name="file" accept="image/*" capture="environment">
+<label>or custom image URL</label><input name="url" placeholder="https://...">
+{% if presets %}<label>or preset</label><select name="preset"><option value="">-- choose --</option>
+{% for p in presets %}<option value="{{ p }}">Preset {{ loop.index }}</option>{% endfor %}</select>{% endif %}
+<button>Change Photo</button></form></div>
+
+<div class="card"><h3>Track Customers &amp; Histories</h3>
+<div style="overflow-x:auto"><table><tr><th>Name</th><th>Phone</th><th>Address</th><th>Orders</th><th>Total spent</th></tr>
+{% for c in customers %}<tr><td>{{ c['name'] }}</td><td>{{ c['phone'] }}</td><td>{{ c['address'] }}</td>
+<td>{{ c['n'] }}</td><td>K{{ '{:,}'.format(c['spent'] or 0) }}</td></tr>{% endfor %}</table></div>
+<p class="small">Spent counts verified (approved) orders only. Open a customer's history:</p>
+{% for c in customers %}<a class="btn grey" style="margin:2px" href="{{ url_for('admin_customer', uid=c['id']) }}">{{ c['name'] }}</a>{% endfor %}</div>
+
+<div class="card"><h3>Daily Customer Club</h3>
+<form method="post" action="{{ url_for('admin_club_send') }}"><textarea name="message" rows="2" placeholder="e.g. Fresh chickens available today!" required></textarea>
+<button>Send alert to {{ members|length }} member(s)</button></form>
+{% for m in members %}<div class="row" style="justify-content:space-between;border-bottom:1px solid #eee;padding:5px 0">
+<span>{{ m['name'] }} ({{ m['phone'] }})</span>
+<form method="post" action="{{ url_for('admin_club_remove', uid=m['id']) }}"><button class="red">Remove</button></form></div>{% endfor %}</div>
+
+<div class="card"><h3>Admins &amp; PIN Reset Requests</h3>
+{% for a in admins %}<p>{{ a['name'] }} ({{ a['phone'] }})</p>{% endfor %}
+{% for r in resets %}<p class="small">Reset request #{{ r['id'] }} for {{ r['name'] }} ({{ r['phone'] }}) - token: <b>{{ r['token'] }}</b> - {{ r['created'] }}<br>
+Verify the person via {{ admin_contact }} before giving them the token.</p>{% endfor %}</div>
+{% endblock %}
