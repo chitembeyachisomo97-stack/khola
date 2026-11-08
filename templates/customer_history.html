@@ -1,0 +1,6 @@
+{% extends 'base.html' %}{% block body %}
+<div class="card"><h2>{{ c['name'] }}</h2><p>{{ c['phone'] }} | {{ c['email'] }} | {{ c['address'] }}</p>
+{% for o in orders %}<p><b>{{ no(o['id']) }}</b> {{ o['qty'] }} x {{ o['product_name'] }} ({{ o['size_label'] }})
+K{{ '{:,}'.format(o['total']) }} <span class="badge {{ o['status'] }}">{{ o['status'] }}</span>
+<span class="small">{{ o['created'] }}</span></p>{% else %}<p>No orders.</p>{% endfor %}
+<a class="btn grey" href="{{ url_for('admin_dashboard') }}">Back</a></div>{% endblock %}

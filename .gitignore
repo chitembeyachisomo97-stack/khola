@@ -1,0 +1,6 @@
+khola.db
+secret.key
+__pycache__/
+*.pyc
+static/uploads/*
+!static/uploads/.keep

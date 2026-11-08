@@ -1,0 +1,42 @@
+{% extends 'base.html' %}{% block body %}
+<img class="hero" src="{{ photo }}" alt="Chickens">
+<h2>Live Khola Inventory &amp; Sales</h2>
+{% for p in products %}
+<div class="card"><h3>{{ loop.index }}. {{ p['name'] }}</h3>
+<p><b>Stock:</b> {{ p['stock'] }} available.</p>
+<p><b>Sizes &amp; Pricing:</b></p>
+{% for s in sizes[p['id']] %}
+<div class="row" style="justify-content:space-between;border-bottom:1px solid #eee;padding:6px 0">
+<span>{{ s['label'] }} - <b>K{{ '{:,}'.format(s['price']) }}</b></span>
+<button {% if p['stock']<=0 %}disabled{% endif %}
+ onclick="openOrder({{ s['id'] }},'{{ p['name'] }} ({{ s['label'] }})',{{ s['price'] }},{{ p['stock'] }})">Order</button></div>
+{% endfor %}</div>{% endfor %}
+
+<dialog id="orderDlg"><h3>Place Order</h3><p id="oName"></p>
+<form id="orderForm"><input type="hidden" name="size_id" id="oSize">
+<label>Quantity</label><input type="number" name="qty" id="oQty" min="1" value="1" required>
+<p>Total: <b id="oTotal"></b></p>
+<div class="row"><button>Check Khola &amp; Continue</button>
+<button type="button" class="grey" onclick="orderDlg.close()">Cancel</button></div></form></dialog>
+
+<dialog id="payDlg"><h3>Payment</h3>
+<p>Order Number: <b id="pNo"></b></p><p>Pay exactly: <b id="pTotal" style="color:#e65100;font-size:1.3rem"></b></p>
+<form id="payForm" method="post"><label>Send money to:</label>
+{% for name, num in channels.items() %}
+<label style="display:block;padding:8px;border:1px solid #ccc;border-radius:8px;margin:5px 0">
+<input type="radio" name="channel" value="{{ name }}" required style="width:auto"> <b>{{ name }}</b>: {{ num }}</label>{% endfor %}
+<label>Transaction PIN / Reference code (after transfer)</label>
+<input name="reference" required placeholder="e.g. MP2611031234">
+<div class="row"><button>Submit Payment</button><button type="button" class="grey" onclick="payDlg.close()">Close</button></div>
+</form></dialog>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+window.KHOLA_LOGGED_IN = {{ 'true' if user else 'false' }};
+window.KHOLA_LOGIN_URL = '{{ url_for("login") }}';
+window.KHOLA_ORDER_URL = '{{ url_for("order_start") }}';
+</script>
+<script src="{{ url_for('static', filename='js/order.js') }}"></script>
+{% endblock %}

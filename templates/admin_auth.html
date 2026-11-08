@@ -1,0 +1,28 @@
+{% extends 'base.html' %}{% block body %}
+<div class="card"><h2>{{ title }}</h2>
+<form method="post" id="pinForm">
+{% if mode in ('login','signup','forgot','reset') %}<input name="phone" placeholder="Admin phone number" required>{% endif %}
+{% if mode=='signup' %}<input name="name" placeholder="Admin name" required>
+<input name="invite" placeholder="Admin invite code" required>{% endif %}
+{% if mode=='reset' %}<input name="token" placeholder="Reset token from the owner" required>{% endif %}
+{% if mode in ('login','signup','reset') %}
+<p style="text-align:center">{{ 'New 4-digit PIN' if mode!='login' else '4-digit PIN' }}</p>
+<input type="hidden" name="pin" id="pin">
+<div class="dots" id="dots"></div>
+<div class="pad">{% for k in '123456789' %}<button type="button" onclick="k('{{k}}')">{{k}}</button>{% endfor %}
+<button type="button" onclick="c()">C</button><button type="button" onclick="k('0')">0</button>
+<button type="button" onclick="b()">&#9003;</button></div>
+{% endif %}
+<button>{{ title }}</button></form>
+<p class="small">
+{% if mode=='login' %}<a href="{{ url_for('admin_signup') }}">Admin sign up</a> |
+<a href="{{ url_for('admin_forgot') }}">Forgot PIN?</a>{% endif %}</p>
+{% if wa %}<div class="flash"><p>To restore your PIN, send a message request to {{ admin_contact }}
+(carrier SMS charges apply):</p>
+<a class="btn" href="{{ sms }}">Send SMS</a> <a class="btn btn2" href="{{ wa }}">WhatsApp</a>
+<p class="small">The owner will give you a reset token. Then <a href="{{ url_for('admin_reset') }}">enter token &amp; new PIN</a>.</p></div>{% endif %}
+</div>{% endblock %}
+
+{% block scripts %}
+{% if mode in ('login','signup','reset') %}<script src="{{ url_for('static', filename='js/pin.js') }}"></script>{% endif %}
+{% endblock %}

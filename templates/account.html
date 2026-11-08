@@ -1,0 +1,15 @@
+{% extends 'base.html' %}{% block body %}
+<h2>My Dashboard</h2>
+<div class="card"><h3>Notifications</h3>
+{% for n in notes %}<p>&#128276; {{ n['message'] }} <span class="small">({{ n['created'] }})</span></p>
+{% else %}<p class="small">No notifications yet.</p>{% endfor %}</div>
+<div class="card"><h3>My Orders</h3>
+{% for o in orders %}<div style="border-bottom:1px solid #eee;padding:8px 0">
+<b>{{ no(o['id']) }}</b> <span class="badge {{ o['status'] }}">{{ o['status'] }}</span><br>
+{{ o['qty'] }} x {{ o['product_name'] }} ({{ o['size_label'] }}) - K{{ '{:,}'.format(o['total']) }}<br>
+<span class="small">{{ o['channel'] or 'Payment not submitted' }} | Ref: {{ o['reference'] or '-' }} | {{ o['created'] }}</span>
+{% if o['status'] in ('WAITING','REJECTED') and not o['refund_requested'] and o['reference'] %}
+<form method="post" action="{{ url_for('request_refund', oid=o['id']) }}" style="margin-top:6px">
+<button class="red">Reclaim Refund</button></form>{% endif %}
+{% if o['refund_requested'] and o['status']!='REFUNDED' %}<br><span class="small">Refund requested - waiting for admin.</span>{% endif %}
+</div>{% else %}<p class="small">No orders yet.</p>{% endfor %}</div>{% endblock %}
