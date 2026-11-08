@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS sizes(id INTEGER PRIMARY KEY, product_id INTEGER,
 CREATE TABLE IF NOT EXISTS orders(id INTEGER PRIMARY KEY, user_id INTEGER, size_id INTEGER,
   product_id INTEGER, product_name TEXT, size_label TEXT, qty INTEGER, total INTEGER,
   channel TEXT, reference TEXT, status TEXT, deducted INTEGER DEFAULT 0,
-  refund_requested INTEGER DEFAULT 0, created TEXT);
+  refund_requested INTEGER DEFAULT 0, created TEXT, verified_at TEXT);
 CREATE TABLE IF NOT EXISTS notifications(id INTEGER PRIMARY KEY, user_id INTEGER,
   message TEXT, created TEXT);
 CREATE TABLE IF NOT EXISTS club(id INTEGER PRIMARY KEY, user_id INTEGER UNIQUE, created TEXT);
@@ -49,6 +49,10 @@ def init_db():
     """Create tables and first-time stock if the database is new."""
     con = sqlite3.connect(config.DB_PATH)
     con.executescript(SCHEMA)
+    # upgrade older databases (made before verified_at existed)
+    cols = [r[1] for r in con.execute("PRAGMA table_info(orders)")]
+    if "verified_at" not in cols:
+        con.execute("ALTER TABLE orders ADD COLUMN verified_at TEXT")
     defaults = {"brand": config.DEFAULT_BRAND, "motto": config.DEFAULT_MOTTO,
                 "photo": config.DEFAULT_PHOTO}
     for k, v in defaults.items():
@@ -80,3 +84,23 @@ def notify(user_id, message):
 
 def order_no(oid):
     return f"Chichi {oid:04d}"
+
+
+def sales_summary():
+    """Numbers for the admin Today's Sales card."""
+    d = db()
+    day = datetime.now().strftime("%Y-%m-%d") + "%"
+
+    def one(sql, *args):
+        return dict(d.execute(sql, args).fetchone())
+
+    verified = one("SELECT COUNT(*) n, COALESCE(SUM(qty),0) birds, COALESCE(SUM(total),0) money "
+                   "FROM orders WHERE status='APPROVED' AND COALESCE(verified_at, created) LIKE ?", day)
+    placed = one("SELECT COUNT(*) n FROM orders WHERE created LIKE ?", day)
+    waiting = one("SELECT COUNT(*) n, COALESCE(SUM(total),0) money FROM orders "
+                  "WHERE status='WAITING' AND reference IS NOT NULL")
+    refunds = one("SELECT COUNT(*) n FROM orders WHERE refund_requested=1 AND status!='REFUNDED'")
+    alltime = one("SELECT COALESCE(SUM(total),0) money, COALESCE(SUM(qty),0) birds "
+                  "FROM orders WHERE status='APPROVED'")
+    return dict(verified=verified, placed=placed["n"], waiting=waiting,
+                refunds=refunds["n"], alltime=alltime)

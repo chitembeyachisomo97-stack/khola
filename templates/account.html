@@ -11,5 +11,11 @@
 {% if o['status'] in ('WAITING','REJECTED') and not o['refund_requested'] and o['reference'] %}
 <form method="post" action="{{ url_for('request_refund', oid=o['id']) }}" style="margin-top:6px">
 <button class="red">Reclaim Refund</button></form>{% endif %}
+{% if o['status']=='WAITING' and not o['reference'] %}
+<form method="post" action="{{ url_for('order_pay', oid=o['id']) }}" style="margin-top:6px">
+<select name="channel" required><option value="">Pay with...</option>
+{% for n, num in channels.items() %}<option value="{{ n }}">{{ n }} ({{ num }})</option>{% endfor %}</select>
+<input name="reference" placeholder="Transaction PIN / Reference code" required>
+<button>Submit Payment</button></form>{% endif %}
 {% if o['refund_requested'] and o['status']!='REFUNDED' %}<br><span class="small">Refund requested - waiting for admin.</span>{% endif %}
 </div>{% else %}<p class="small">No orders yet.</p>{% endfor %}</div>{% endblock %}

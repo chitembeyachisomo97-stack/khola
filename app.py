@@ -23,7 +23,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
 
 import config
-from db import close_db, db, init_db, notify, now, order_no, set_setting, setting
+from db import close_db, db, init_db, notify, now, order_no, sales_summary, set_setting, setting
 
 os.makedirs(config.UPLOAD_DIR, exist_ok=True)
 
@@ -109,7 +109,8 @@ def home():
     sizes = {p["id"]: db().execute("SELECT * FROM sizes WHERE product_id=?", (p["id"],)).fetchall()
              for p in products}
     return render_template("home.html", products=products, sizes=sizes,
-                           photo=setting("photo"), channels=config.PAY_CHANNELS)
+                           photo=setting("photo"), channels=config.PAY_CHANNELS,
+                           low_limit=config.LOW_STOCK_LIMIT)
 
 
 @app.route("/signup", methods=["GET", "POST"])
@@ -185,7 +186,7 @@ def my_account():
     uid = session["user_id"]
     orders = db().execute("SELECT * FROM orders WHERE user_id=? ORDER BY id DESC", (uid,)).fetchall()
     notes = db().execute("SELECT * FROM notifications WHERE user_id=? ORDER BY id DESC LIMIT 30", (uid,)).fetchall()
-    return render_template("account.html", orders=orders, notes=notes)
+    return render_template("account.html", orders=orders, notes=notes, channels=config.PAY_CHANNELS)
 
 
 @app.route("/order/start", methods=["POST"])
@@ -216,10 +217,19 @@ def order_start():
 def order_pay(oid):
     o = db().execute("SELECT * FROM orders WHERE id=? AND user_id=?", (oid, session["user_id"])).fetchone()
     channel = request.form.get("channel")
-    ref = request.form.get("reference", "").strip()
+    ref = " ".join(request.form.get("reference", "").split()).upper()
     if not o or channel not in config.PAY_CHANNELS or not ref:
         flash("Payment details incomplete.")
         return redirect(url_for("home"))
+    if o["status"] != "WAITING":
+        flash("This order can no longer be changed.")
+        return redirect(url_for("my_account"))
+    # one payment reference can only be used on one order
+    if db().execute("SELECT 1 FROM orders WHERE reference=? AND id!=?", (ref, oid)).fetchone():
+        flash("That payment reference was already used on another order. Check the code you typed "
+              "or contact the admin on WhatsApp " + config.CONTACT_WHATSAPP + ". "
+              "You can enter it again under My Orders.")
+        return redirect(url_for("my_account"))
     db().execute("UPDATE orders SET channel=?, reference=? WHERE id=?", (channel, ref, oid))
     db().commit()
     flash(f"{order_no(oid)} is WAITING. The admin will verify your payment soon.")
@@ -384,7 +394,9 @@ def admin_dashboard():
     admins = d.execute("SELECT * FROM admins").fetchall()
     resets = d.execute("SELECT r.*, a.name, a.phone FROM pin_resets r JOIN admins a ON a.id=r.admin_id "
                        "WHERE r.used=0 ORDER BY r.id DESC LIMIT 10").fetchall()
+    low = [p for p in products if p["stock"] <= config.LOW_STOCK_LIMIT]
     return render_template("admin.html", products=products, sizes=sizes, orders=orders,
+                           summary=sales_summary(), low=low, low_limit=config.LOW_STOCK_LIMIT,
                            customers=customers, members=members, admins=admins, resets=resets,
                            presets=config.PRESET_PHOTOS, admin_contact=config.ADMIN_CONTACT)
 
@@ -401,7 +413,7 @@ def admin_verify(oid):
         flash(f"Not enough stock for {order_no(oid)} (only {p['stock']} left). Reject and refund instead.")
         return redirect(url_for("admin_dashboard"))
     d.execute("UPDATE products SET stock=stock-? WHERE id=?", (o["qty"], o["product_id"]))
-    d.execute("UPDATE orders SET status='APPROVED', deducted=1 WHERE id=?", (oid,))
+    d.execute("UPDATE orders SET status='APPROVED', deducted=1, verified_at=? WHERE id=?", (now(), oid))
     notify(o["user_id"], f"{order_no(oid)} VERIFIED. Your {o['qty']} x {o['product_name']} "
                          f"({o['size_label']}) is confirmed. Thank you!")
     d.commit()

@@ -1,6 +1,20 @@
 {% extends 'base.html' %}{% block body %}
 <h2>Admin Dashboard <a class="btn grey" style="float:right" href="{{ url_for('admin_logout') }}">Logout</a></h2>
 
+{% if low %}<div class="flash" style="border-color:#e65100;background:#fff3e0"><b>&#9888; Low stock:</b>
+{% for p in low %}{{ p['name'] }} ({{ p['stock'] }} left){% if not loop.last %}, {% endif %}{% endfor %}
+- update the Khola Stock section below.</div>{% endif %}
+
+<div class="card"><h3>Today's Sales</h3>
+<table>
+<tr><td>Orders placed today</td><td><b>{{ summary.placed }}</b></td></tr>
+<tr><td>Verified today</td><td><b>{{ summary.verified.n }}</b> order(s), <b>{{ summary.verified.birds }}</b> chickens</td></tr>
+<tr><td>Money confirmed today</td><td><b>K{{ '{:,}'.format(summary.verified.money) }}</b></td></tr>
+<tr><td>Waiting for you to verify</td><td><b>{{ summary.waiting.n }}</b> order(s) (K{{ '{:,}'.format(summary.waiting.money) }})</td></tr>
+<tr><td>Refund requests open</td><td><b>{{ summary.refunds }}</b></td></tr>
+<tr><td>All time</td><td><b>K{{ '{:,}'.format(summary.alltime.money) }}</b> from {{ summary.alltime.birds }} chickens</td></tr>
+</table></div>
+
 <div class="card"><h3>Daily Customer Management</h3>
 {% for o in orders %}<div style="border-bottom:1px solid #eee;padding:8px 0">
 <b>{{ no(o['id']) }}</b> <span class="badge {{ o['status'] }}">{{ o['status'] }}</span>

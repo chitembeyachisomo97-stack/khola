@@ -40,6 +40,9 @@ SEED_PRODUCTS = [
     ("Live DuDu Chicken", 100, [("Jumbo Heavy", 12000), ("Standard Table", 10000),
                                 ("Compact Roaster", 8000)]),
 ]
+# Warn the admin (and customers) when a chicken type has this many or fewer left
+LOW_STOCK_LIMIT = 10
+
 DEFAULT_BRAND = "KHOLA"
 DEFAULT_MOTTO = "Lero tikhwasule!"
 

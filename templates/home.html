@@ -3,7 +3,7 @@
 <h2>Live Khola Inventory &amp; Sales</h2>
 {% for p in products %}
 <div class="card"><h3>{{ loop.index }}. {{ p['name'] }}</h3>
-<p><b>Stock:</b> {{ p['stock'] }} available.</p>
+<p><b>Stock:</b> {{ p['stock'] }} available.{% if p['stock'] <= 0 %} <b style="color:#c62828">SOLD OUT</b>{% elif p['stock'] <= low_limit %} <b style="color:#e65100">Few left - order soon!</b>{% endif %}</p>
 <p><b>Sizes &amp; Pricing:</b></p>
 {% for s in sizes[p['id']] %}
 <div class="row" style="justify-content:space-between;border-bottom:1px solid #eee;padding:6px 0">
