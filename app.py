@@ -102,6 +102,12 @@ def service_worker():
     return resp
 
 
+# Serve uploaded photos from the permanent KHOLA data directory.
+@app.route("/user_uploads/<path:filename>")
+def user_uploads(filename):
+    return send_from_directory(config.UPLOAD_DIR, filename)
+
+
 # ------------------------------------------------------------------- customer routes
 @app.route("/")
 def home():
@@ -485,7 +491,7 @@ def admin_photo():
             return redirect(url_for("admin_dashboard"))
         name = f"home_{secrets.token_hex(4)}{ext}"
         f.save(os.path.join(config.UPLOAD_DIR, name))
-        set_setting("photo", url_for("static", filename="uploads/" + name))
+        set_setting("photo", url_for("user_uploads", filename=name))
     elif url.startswith(("http://", "https://")):
         set_setting("photo", url)
     else:

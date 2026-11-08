@@ -1,34 +1,36 @@
 """
-KHOLA for Windows - opens the online KHOLA website in its own app window.
-The website address is read from site_url.txt (edit that file, then rebuild).
+KHOLA Standalone Windows Desktop Application.
+Runs the Flask application locally inside a desktop window.
 """
-import os
-import sys
-import webbrowser
+import threading
 
-
-def read_site_url():
-    here = os.path.dirname(os.path.abspath(__file__))
-    folders = [getattr(sys, "_MEIPASS", here), here, os.path.dirname(here), os.getcwd()]
-    for folder in folders:
-        path = os.path.join(folder, "site_url.txt")
-        if os.path.exists(path):
-            with open(path, encoding="utf-8") as fh:
-                url = fh.read().strip()
-            if url:
-                return url
-    raise SystemExit("site_url.txt not found")
+import webview
+from werkzeug.serving import make_server
 
 
 def main():
-    url = read_site_url()
+    from app import app
+
+    server = make_server("127.0.0.1", 0, app)
+    port = server.server_port
+
+    server_thread = threading.Thread(
+        target=server.serve_forever,
+        daemon=True
+    )
+    server_thread.start()
+
     try:
-        import webview  # pywebview: shows the site in a normal app window
-    except ImportError:
-        webbrowser.open(url)  # fallback: open in the default browser
-        return
-    webview.create_window("KHOLA", url, width=1000, height=760, min_size=(380, 600))
-    webview.start()
+        webview.create_window(
+            "KHOLA - Lero tikhwasule!",
+            f"http://127.0.0.1:{port}",
+            width=1100,
+            height=780,
+            min_size=(380, 600)
+        )
+        webview.start()
+    finally:
+        server.shutdown()
 
 
 if __name__ == "__main__":
